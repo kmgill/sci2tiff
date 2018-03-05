@@ -7,9 +7,9 @@ from scipy.misc import imresize
 from astropy.io import fits
 import vicar
 
-def load_fits_matrix(input_file):
+def load_fits_matrix(input_file, band=0):
     hdu_list = fits.open(input_file)
-    pixel_matrix = hdu_list[1].data  # Hardcoded for now
+    pixel_matrix = hdu_list[band].data  # Hardcoded for now
     return pixel_matrix
 
 
@@ -52,8 +52,8 @@ def fill_stripes(pixel_matrix, stripes):
         fill_stripe(pixel_matrix, stripe[0], stripe[1])
 
 
-def get_data_min_max(input_file):
-    pixel_matrix = load_fits_matrix(input_file)
+def get_data_min_max(input_file, band=0):
+    pixel_matrix = load_image_matrix(input_file, band=band)
 
     pixel_min = np.nanmin(pixel_matrix)
     pixel_max = np.nanmax(pixel_matrix)
@@ -77,9 +77,9 @@ def build_output_filename(input_file):
     return input_file[:input_file.lower().rindex(".")]
 
 
-def load_image_matrix(input_file):
+def load_image_matrix(input_file, band=0):
     if input_file.lower().find(".fits"):
-        return load_fits_matrix(input_file)
+        return load_fits_matrix(input_file, band=band)
     else:  # Otherwise assume it to be vicar. TODO: Don't make this assumption
         return load_vic_matrix(input_file)
 
@@ -91,7 +91,8 @@ def sci2tiff(input_file,
             dohisteq=False,
             minpercent=None,
             maxpercent=None,
-            resize=None):
+            resize=None,
+            band=0):
 
     pixel_matrix = load_image_matrix(input_file)
 
@@ -163,6 +164,7 @@ if __name__ == "__main__":
     parser.add_argument("-x", "--maxpercent", help="Clamp values to maximum percent (0-100)", type=float, default=None)
     parser.add_argument("-n", "--minpercent", help="Clamp values to minimum percent (0-100)", type=float, default=None)
     parser.add_argument("-r", "--resize", help="Resize image to WidthxHeight", type=str, default=None)
+    parser.add_argument("-b", "--band", help="Data band", type=int, default=1)
 
     args = parser.parse_args()
 
@@ -174,6 +176,7 @@ if __name__ == "__main__":
     maxpercent = args.maxpercent
     minpercent = args.minpercent
     resize = args.resize
+    band = args.band
 
     input_min = None
     input_max = None
@@ -182,7 +185,7 @@ if __name__ == "__main__":
     if match_intensities is True:
         data_limits = []
         for input_file in input_files:
-            data_min, data_max = get_data_min_max(input_file)
+            data_min, data_max = get_data_min_max(input_file, band=band)
             data_limits += [data_min, data_max]
 
         input_min = np.array(data_limits).min()
@@ -197,7 +200,8 @@ if __name__ == "__main__":
                 dohisteq=dohisteq,
                 minpercent=minpercent,
                 maxpercent=maxpercent,
-                resize=resize
+                resize=resize,
+                band=band
                 )
 
 
