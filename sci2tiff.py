@@ -7,9 +7,10 @@ from scipy.misc import imresize
 from astropy.io import fits
 import vicar
 
+
 def load_fits_matrix(input_file, band=0):
     hdu_list = fits.open(input_file)
-    pixel_matrix = hdu_list[band].data  # Hardcoded for now
+    pixel_matrix = hdu_list[band].data
     return pixel_matrix
 
 
@@ -94,7 +95,7 @@ def sci2tiff(input_file,
             resize=None,
             band=0):
 
-    pixel_matrix = load_image_matrix(input_file)
+    pixel_matrix = load_image_matrix(input_file, band=band)
 
     # Scale to 0-65535 and convert to UInt16
     if force_input_min is not None:
