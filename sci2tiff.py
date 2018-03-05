@@ -11,6 +11,8 @@ import vicar
 def load_fits_matrix(input_file, band=0):
     hdu_list = fits.open(input_file)
     pixel_matrix = hdu_list[band].data
+
+    pixel_matrix = np.flipud(pixel_matrix)
     return pixel_matrix
 
 
