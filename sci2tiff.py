@@ -18,6 +18,20 @@ def load_fits_matrix(input_file, band=0):
 
 def load_vic_matrix(input_file):
     pixel_matrix, value_pairs = vicar.load_vic(input_file)
+
+    # Format for UInt16
+    pixel_matrix = pixel_matrix * 65535.0
+    pixel_matrix = pixel_matrix.astype(np.uint16)
+
+    return pixel_matrix
+
+def load_image_matrix(input_file, band=0):
+
+    if input_file.lower().find(".fits") >= 0:
+        pixel_matrix = load_fits_matrix(input_file, band=band)
+    else:  # Otherwise assume it to be vicar. TODO: Don't make this assumption
+        pixel_matrix = load_vic_matrix(input_file)
+
     return pixel_matrix
 
 """
@@ -55,8 +69,25 @@ def fill_stripes(pixel_matrix, stripes):
         fill_stripe(pixel_matrix, stripe[0], stripe[1])
 
 
-def get_data_min_max(input_file, band=0):
+def get_data_min_max(input_file,
+            fill_null_stripes=False,
+            fillsat=False,
+            dohisteq=False,
+            minpercent=None,
+            maxpercent=None,
+            band=0):
+
     pixel_matrix = load_image_matrix(input_file, band=band)
+
+    pixel_matrix = process_data(pixel_matrix,
+                                None,
+                                None,
+                                fill_null_stripes,
+                                fillsat,
+                                dohisteq,
+                                minpercent,
+                                maxpercent,
+                                None)
 
     pixel_min = np.nanmin(pixel_matrix)
     pixel_max = np.nanmax(pixel_matrix)
@@ -80,13 +111,10 @@ def build_output_filename(input_file):
     return input_file[:input_file.lower().rindex(".")]
 
 
-def load_image_matrix(input_file, band=0):
-    if input_file.lower().find(".fits"):
-        return load_fits_matrix(input_file, band=band)
-    else:  # Otherwise assume it to be vicar. TODO: Don't make this assumption
-        return load_vic_matrix(input_file)
 
-def sci2tiff(input_file,
+
+
+def process_data(pixel_matrix,
             force_input_min=None,
             force_input_max=None,
             fill_null_stripes=False,
@@ -94,11 +122,7 @@ def sci2tiff(input_file,
             dohisteq=False,
             minpercent=None,
             maxpercent=None,
-            resize=None,
-            band=0):
-
-    pixel_matrix = load_image_matrix(input_file, band=band)
-
+            resize=None):
     # Scale to 0-65535 and convert to UInt16
     if force_input_min is not None:
         pixel_min = force_input_min
@@ -109,7 +133,6 @@ def sci2tiff(input_file,
         pixel_max = force_input_max
     else:
         pixel_max = np.nanmax(pixel_matrix)
-
 
     if fill_null_stripes is True:
         stripes = detect_null_stripes(pixel_matrix)
@@ -136,16 +159,36 @@ def sci2tiff(input_file,
     pixel_matrix = pixel_matrix / (pixel_max - pixel_min)
     pixel_matrix[pixel_matrix < 0] = 0
 
-    # Format for UInt16
-    pixel_matrix = pixel_matrix * 65535.0
-    pixel_matrix = pixel_matrix.astype(np.uint16)
-
     if dohisteq is True:
         pixel_matrix = histeq(pixel_matrix)
 
     if resize is not None:
         pixel_matrix = imresize(pixel_matrix, size=resize, interp='bicubic')
 
+    return pixel_matrix
+
+
+def sci2tiff(input_file,
+            force_input_min=None,
+            force_input_max=None,
+            fill_null_stripes=False,
+            fillsat=False,
+            dohisteq=False,
+            minpercent=None,
+            maxpercent=None,
+            resize=None,
+            band=0):
+
+    pixel_matrix = load_image_matrix(input_file, band=band)
+    pixel_matrix = process_data(pixel_matrix,
+                                force_input_min,
+                                force_input_max,
+                                fill_null_stripes,
+                                fillsat,
+                                dohisteq,
+                                minpercent,
+                                maxpercent,
+                                resize)
 
     output_filename = build_output_filename(input_file)
     print "Writing", output_filename
