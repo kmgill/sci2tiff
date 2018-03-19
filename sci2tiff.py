@@ -19,9 +19,7 @@ def load_fits_matrix(input_file, band=0):
 def load_vic_matrix(input_file):
     pixel_matrix, value_pairs = vicar.load_vic(input_file)
 
-    # Format for UInt16
-    pixel_matrix = pixel_matrix * 65535.0
-    pixel_matrix = pixel_matrix.astype(np.uint16)
+
 
     return pixel_matrix
 
@@ -87,11 +85,12 @@ def get_data_min_max(input_file,
                                 dohisteq,
                                 minpercent,
                                 maxpercent,
-                                None)
+                                None,
+                                convert_to_16bit=False,
+                                stretch=False)
 
     pixel_min = np.nanmin(pixel_matrix)
     pixel_max = np.nanmax(pixel_matrix)
-
     return pixel_min, pixel_max
 
 
@@ -111,9 +110,6 @@ def build_output_filename(input_file):
     return input_file[:input_file.lower().rindex(".")]
 
 
-
-
-
 def process_data(pixel_matrix,
             force_input_min=None,
             force_input_max=None,
@@ -122,7 +118,9 @@ def process_data(pixel_matrix,
             dohisteq=False,
             minpercent=None,
             maxpercent=None,
-            resize=None):
+            resize=None,
+            convert_to_16bit=True,
+            stretch=True):
     # Scale to 0-65535 and convert to UInt16
     if force_input_min is not None:
         pixel_min = force_input_min
@@ -141,13 +139,11 @@ def process_data(pixel_matrix,
     # The min/max percent stuff isn't correct. TODO: Make it correct.
     if minpercent is not None:
         diff = pixel_min + ((pixel_max - pixel_min) * (minpercent / 100.0))
-        print "Min:", diff
         pixel_matrix[pixel_matrix < diff] = diff
         pixel_min = diff
 
     if maxpercent is not None:
         diff = pixel_min + ((pixel_max - pixel_min) * (maxpercent / 100.0))
-        print "Max:", diff
         pixel_matrix[pixel_matrix > diff] = diff
         pixel_max = diff
 
@@ -155,9 +151,15 @@ def process_data(pixel_matrix,
         inds = np.where(np.isnan(pixel_matrix))
         pixel_matrix[inds] = np.nanmax(pixel_matrix)
 
-    pixel_matrix = pixel_matrix - pixel_min
-    pixel_matrix = pixel_matrix / (pixel_max - pixel_min)
-    pixel_matrix[pixel_matrix < 0] = 0
+    if stretch is True:
+        pixel_matrix = pixel_matrix - pixel_min
+        pixel_matrix = pixel_matrix / (pixel_max - pixel_min)
+        pixel_matrix[pixel_matrix < 0] = 0
+
+    # Format for UInt16
+    if convert_to_16bit is True:
+        pixel_matrix = pixel_matrix * 65535.0
+        pixel_matrix = pixel_matrix.astype(np.uint16)
 
     if dohisteq is True:
         pixel_matrix = histeq(pixel_matrix)
@@ -195,7 +197,7 @@ def sci2tiff(input_file,
 
     # Create output tiff
     tiff = TIFFimage(pixel_matrix, description='')
-    tiff.write_file(output_filename, compression='none')
+    tiff.write_file(output_filename, compression='none', verbose=False)
     return True
 
 
