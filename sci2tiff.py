@@ -73,7 +73,8 @@ def get_data_min_max(input_file,
             dohisteq=False,
             minpercent=None,
             maxpercent=None,
-            band=0):
+            band=0,
+            trim=0):
 
     pixel_matrix = load_image_matrix(input_file, band=band)
 
@@ -86,6 +87,7 @@ def get_data_min_max(input_file,
                                 minpercent,
                                 maxpercent,
                                 None,
+                                trim=trim,
                                 convert_to_16bit=False,
                                 stretch=False)
 
@@ -119,8 +121,13 @@ def process_data(pixel_matrix,
             minpercent=None,
             maxpercent=None,
             resize=None,
+            trim=0,
             convert_to_16bit=True,
             stretch=True):
+
+    if type(trim) == int and trim > 0:
+        pixel_matrix = pixel_matrix[trim:-trim, trim:-trim]
+
     # Scale to 0-65535 and convert to UInt16
     if force_input_min is not None:
         pixel_min = force_input_min
@@ -179,7 +186,8 @@ def sci2tiff(input_file,
             minpercent=None,
             maxpercent=None,
             resize=None,
-            band=0):
+            band=0,
+            trim=0):
 
     pixel_matrix = load_image_matrix(input_file, band=band)
     pixel_matrix = process_data(pixel_matrix,
@@ -190,7 +198,8 @@ def sci2tiff(input_file,
                                 dohisteq,
                                 minpercent,
                                 maxpercent,
-                                resize)
+                                resize,
+                                trim)
 
     output_filename = build_output_filename(input_file)
     print "Writing", output_filename
@@ -213,7 +222,7 @@ if __name__ == "__main__":
     parser.add_argument("-n", "--minpercent", help="Clamp values to minimum percent (0-100)", type=float, default=None)
     parser.add_argument("-r", "--resize", help="Resize image to WidthxHeight", type=str, default=None)
     parser.add_argument("-b", "--band", help="Data band", type=int, default=1)
-
+    parser.add_argument("-t", "--trim", help="Trim borders", type=int, default=0)
     args = parser.parse_args()
 
     input_files = args.data
@@ -225,6 +234,7 @@ if __name__ == "__main__":
     minpercent = args.minpercent
     resize = args.resize
     band = args.band
+    trim = args.trim
 
     input_min = None
     input_max = None
@@ -233,7 +243,7 @@ if __name__ == "__main__":
     if match_intensities is True:
         data_limits = []
         for input_file in input_files:
-            data_min, data_max = get_data_min_max(input_file, band=band)
+            data_min, data_max = get_data_min_max(input_file, band=band, trim=trim)
             data_limits += [data_min, data_max]
 
         input_min = np.array(data_limits).min()
@@ -249,7 +259,8 @@ if __name__ == "__main__":
                 minpercent=minpercent,
                 maxpercent=maxpercent,
                 resize=resize,
-                band=band
+                band=band,
+                trim=trim
                 )
 
 
