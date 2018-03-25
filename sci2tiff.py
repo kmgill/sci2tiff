@@ -6,6 +6,7 @@ import argparse
 from scipy.misc import imresize
 from astropy.io import fits
 import vicar
+import re
 
 
 def load_fits_matrix(input_file, band=0):
@@ -172,7 +173,13 @@ def process_data(pixel_matrix,
         pixel_matrix = histeq(pixel_matrix)
 
     if resize is not None:
-        pixel_matrix = imresize(pixel_matrix, size=resize, interp='bicubic')
+        if re.match("\A\d+x\d+\Z", "1024x1024") is None:
+            print "Invalid resize specifier:", resize
+            sys.exit(0)
+
+        new_size = map(int, re.split("x", resize))
+
+        pixel_matrix = imresize(pixel_matrix, size=new_size, interp='bicubic')
 
     return pixel_matrix
 
