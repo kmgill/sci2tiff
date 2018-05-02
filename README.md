@@ -7,6 +7,7 @@ It has currently been tested on calibrated Cassini VICAR files that are output f
 ```
 usage: sci2tiff.py [-h] -d DATA [DATA ...] [-i] [-f] [-s] [-e] [-x MAXPERCENT]
                    [-n MINPERCENT] [-r RESIZE] [-b BAND] [-t TRIM]
+                   [-o OUTPUTFORMAT] [-X MAXVALUE] [-N MINVALUE] [-S STD]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -21,7 +22,16 @@ optional arguments:
   -n MINPERCENT, --minpercent MINPERCENT
                         Clamp values to minimum percent (0-100)
   -r RESIZE, --resize RESIZE
-                        Resize image to WidthxHeight
+                        Resize image to WidthxHeight or Percentage (n%)
   -b BAND, --band BAND  Data band
   -t TRIM, --trim TRIM  Trim borders
+  -o OUTPUTFORMAT, --outputformat OUTPUTFORMAT
+                        Output format
+  -X MAXVALUE, --maxvalue MAXVALUE
+                        Clamp values to maximum value
+  -N MINVALUE, --minvalue MINVALUE
+                        Clamp values to minimum value
+  -S STD, --std STD     Clamp values to within multiple of standard deviations
+                        of mean
+
 ```
