@@ -251,7 +251,7 @@ if __name__ == "__main__":
     parser.add_argument("-e", "--histeq", help="Apply histogram equalization", required=False, action="store_true")
     parser.add_argument("-x", "--maxpercent", help="Clamp values to maximum percent (0-100)", type=float, default=None)
     parser.add_argument("-n", "--minpercent", help="Clamp values to minimum percent (0-100)", type=float, default=None)
-    parser.add_argument("-r", "--resize", help="Resize image to WidthxHeight", type=str, default=None)
+    parser.add_argument("-r", "--resize", help="Resize image to WidthxHeight or percentage (n%)", type=str, default=None)
     parser.add_argument("-b", "--band", help="Data band", type=int, default=1)
     parser.add_argument("-t", "--trim", help="Trim borders", type=int, default=0)
     parser.add_argument("-o", "--outputformat", help="Output format", type=str, default="uint16")
